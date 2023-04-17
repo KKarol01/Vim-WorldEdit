@@ -42,7 +42,7 @@ Now you are in *command mode*. To exit, you can press escape[^2] or backtick aga
 In *command mode* you cannot move and you are accountable for every letter you press (like in real vim).
 
 Now the only thing left to do is to compose a command.
-Further in this readme, there is a keymap list, which you should refer to and memorize. I tried to make it fairly easy, as some concepts are borrowed directly from the vim keymapping, and the command keys translate to the first letter of a command they execute (most of the time).
+Further in this readme, there is a [keymap list](https://github.com/ThinCan/Vim-WorldEdit/edit/main/README.md#keymap), which you should refer to and memorize. I tried to make it fairly easy, as some concepts are borrowed directly from the vim keymapping, and the command keys translate to the first letter of a command they execute (most of the time).
 Pressing any other key not included in this list does nothing.
 
 ### Simple use
@@ -118,6 +118,11 @@ Special keys:
 - `.` - `Repeat the last command (executed by the mod, not the last one typed by hand in the chat). Can be prefixed with a number (from 1 to 10) to repeat the last x number of commands in order.`
 - `Backtick` - `Toggles the command mode`
 - `Escape` - `Cancels pending command or, if there is no such command (no accumulated flags, modifiers), exits the command mode`
+
+## Where is the sauce?
+The main code is in the location: [ExampleModClient.java](https://github.com/ThinCan/Vim-WorldEdit/blob/main/src/client/java/com/vimworldedit/ExampleModClient.java)
+
+Yes, I didn't even bother changing the filename...
 
 [^1]: Where "C" means holding control key before pressing the button to the right, "F1" is a functional key, and you have saved "stone,glowstone,glass" to the "F1" mask. Spaces included for readability.
 
