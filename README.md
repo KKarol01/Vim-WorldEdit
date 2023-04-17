@@ -42,7 +42,7 @@ Now you are in *command mode*. To exit, you can press escape[^2] or backtick aga
 In *command mode* you cannot move and you are accountable for every letter you press (like in real vim).
 
 Now the only thing left to do is to compose a command.
-Further in this readme, there is a [keymap list](https://github.com/ThinCan/Vim-WorldEdit/edit/main/README.md#keymap), which you should refer to and memorize. I tried to make it fairly easy, as some concepts are borrowed directly from the vim keymapping, and the command keys translate to the first letter of a command they execute (most of the time).
+Further in this readme, there is a [keymap list](https://github.com/ThinCan/Vim-WorldEdit/blob/main/README.md#keymap), which you should refer to and memorize. I tried to make it fairly easy, as some concepts are borrowed directly from the vim keymapping, and the command keys translate to the first letter of a command they execute (most of the time).
 Pressing any other key not included in this list does nothing.
 
 ### Simple use
