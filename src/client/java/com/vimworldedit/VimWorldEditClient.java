@@ -2,7 +2,6 @@ package com.vimworldedit;
 
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
-import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.block.Block;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayNetworkHandler;
@@ -13,15 +12,15 @@ import org.lwjgl.glfw.*;
 
 import java.util.*;
 
-public class ExampleModClient implements ClientModInitializer {
+public class VimWorldEditClient implements ClientModInitializer {
     GLFWKeyCallback oldKeyCallback;
-    private static ArrayList<Action> actions = new ArrayList<>();
-    private static Map<Integer, String> masks = new HashMap<>();
+    private static final ArrayList<Action> actions = new ArrayList<>();
+    private static final Map<Integer, String> masks = new HashMap<>();
 
     /* Keys only work when this is toggled*/
     private static boolean command_mode = false;
 
-    private static final int key_toggle_command_mode = GLFW.GLFW_KEY_GRAVE_ACCENT;
+    private static final int key_toggle_vim_mode = GLFW.GLFW_KEY_GRAVE_ACCENT;
     private static final int key_zero = GLFW.GLFW_KEY_0;
     private static final int key_nine = GLFW.GLFW_KEY_9;
     private static final int key_f1 = GLFW.GLFW_KEY_F1;
@@ -30,44 +29,67 @@ public class ExampleModClient implements ClientModInitializer {
     Command command = new Command();
     Stack<Command> previous_commands = new Stack<>();
 
+    @Override
+    public void onInitializeClient() {
+        ClientLifecycleEvents.CLIENT_STARTED.register(client -> {
+            initialize_commands();
+            var keyCallback = new GLFWKeyCallback() {
+                @Override
+                public void invoke(long window, int key, int scancode, int action, int mods) {
+                    handle_keys(window, key, scancode, action, mods);
+                }
+            };
+            oldKeyCallback = GLFW.glfwSetKeyCallback(MinecraftClient.getInstance().getWindow().getHandle(), keyCallback);
+        });
+    }
+
     private static void initialize_commands() {
+        int shift = GLFW.GLFW_MOD_SHIFT;
+        int ctrl = GLFW.GLFW_MOD_CONTROL;
+
+        KeyCategory command = KeyCategory.COMMAND_KEY;
+        KeyCategory direction = KeyCategory.DIRECTION_KEY;
+        KeyCategory flag = KeyCategory.FLAGS_KEY;
+
         //commands
-        actions.add(new Action("//expand", 0, GLFW.GLFW_KEY_E, 0));
-        actions.add(new Action("//contract", 0, GLFW.GLFW_KEY_C, 0));
-        actions.add(new Action("//move", 0, GLFW.GLFW_KEY_M, 0));
-        actions.add(new Action("//stack", 0, GLFW.GLFW_KEY_S, 0));
-        actions.add(new Action("//copy", 0, GLFW.GLFW_KEY_Y, 0));
-        actions.add(new Action("//paste", 0, GLFW.GLFW_KEY_P, 0));
-        actions.add(new Action("//flip", 0, GLFW.GLFW_KEY_F, 0));
-        actions.add(new Action("//undo", 0, GLFW.GLFW_KEY_U, 0));
-        actions.add(new Action("//redo", 0, GLFW.GLFW_KEY_U, 1));
-        actions.add(new Action("//set 0", 0, GLFW.GLFW_KEY_D, 0));
-        actions.add(new Action("//rotate", 0, GLFW.GLFW_KEY_R, 0));
+        actions.add(new Action("expand", "//expand", command, GLFW.GLFW_KEY_E));
+        actions.add(new Action("contract", "//contract", command, GLFW.GLFW_KEY_C));
+        actions.add(new Action("move", "//move", command, GLFW.GLFW_KEY_M));
+        actions.add(new Action("stack", "//stack", command, GLFW.GLFW_KEY_S));
+        actions.add(new Action("copy", "//copy", command, GLFW.GLFW_KEY_Y));
+        actions.add(new Action("paste", "//paste", command, GLFW.GLFW_KEY_P));
+        actions.add(new Action("flip", "//flip", command, GLFW.GLFW_KEY_F));
+        actions.add(new Action("undo", "//undo", command, GLFW.GLFW_KEY_U));
+        actions.add(new Action("redo", "//redo", command, GLFW.GLFW_KEY_U, shift));
+        actions.add(new Action("delete", "//set 0", command, GLFW.GLFW_KEY_D));
+        actions.add(new Action("rotate", "//rotate", command, GLFW.GLFW_KEY_R));
 
         //directions
-        actions.add(new Action("l", 1, GLFW.GLFW_KEY_H, 0));
-        actions.add(new Action("d", 1, GLFW.GLFW_KEY_J, 0));
-        actions.add(new Action("u", 1, GLFW.GLFW_KEY_K, 0));
-        actions.add(new Action("r", 1, GLFW.GLFW_KEY_L, 0));
-        actions.add(new Action("b", 1, GLFW.GLFW_KEY_J, 1));
-        actions.add(new Action("f", 1, GLFW.GLFW_KEY_K, 1));
+        actions.add(new Action("direction_left", "l", direction, GLFW.GLFW_KEY_H));
+        actions.add(new Action("direction_down", "d", direction, GLFW.GLFW_KEY_J));
+        actions.add(new Action("direction_up", "u", direction, GLFW.GLFW_KEY_K));
+        actions.add(new Action("direction_right", "r", direction, GLFW.GLFW_KEY_L));
+        actions.add(new Action("direction_back", "b", direction, GLFW.GLFW_KEY_J, shift));
+        actions.add(new Action("direction_forwards", "f", direction, GLFW.GLFW_KEY_K, shift));
 
         //flags
-        actions.add(new Action("-e", 2, GLFW.GLFW_KEY_E, 2));
-        actions.add(new Action("-s", 2, GLFW.GLFW_KEY_S, 2));
-        actions.add(new Action("-a", 2, GLFW.GLFW_KEY_A, 2));
-        actions.add(new Action("-m", 2, GLFW.GLFW_KEY_M, 2));
+        actions.add(new Action("include_entities_flag", "-e", flag, GLFW.GLFW_KEY_E, ctrl));
+        actions.add(new Action("move_selection_flag", "-s", flag, GLFW.GLFW_KEY_S, ctrl));
+        actions.add(new Action("ignore_air_flag", "-a", flag, GLFW.GLFW_KEY_A, ctrl));
+        actions.add(new Action("use_mask_flag", "-m", flag, GLFW.GLFW_KEY_M, ctrl));
 
         for (int i = key_f1; i <= key_f12; ++i) {
             masks.put(i, "");
         }
-
-        Collections.sort(actions);
     }
 
-    private static int get_action(int key, int mod) {
-        Action a = new Action("", -1, key, mod);
-        return Collections.binarySearch(actions, a);
+    private static Action get_action(int key, int mod) {
+        for (Action action : actions) {
+            if (action.keyBinding != key) continue;
+            if (action.modifierKey != mod) continue;
+            return action;
+        }
+        return null;
     }
 
     private static boolean is_key_a_number(int key) {
@@ -149,31 +171,25 @@ public class ExampleModClient implements ClientModInitializer {
             return;
         }
 
-        int actionidx = get_action(key, mod);
+        Action action = get_action(key, mod);
 
-        if (actionidx >= actions.size() || actionidx < 0) {
-            return;
-        }
+        if (action == null) return;
 
-        Action action = actions.get(actionidx);
-        if ((action.glfw_mod == mod && action.glfw_key == key) == false) {
+        if (!(action.modifierKey == mod) || !(action.keyBinding == key)) {
             return;
         }
 
 
         switch (action.category) {
-            case 0: {
+            case COMMAND_KEY -> {
                 command.command = action.command;
                 execute_command();
-                break;
             }
-            case 1: {
+            case DIRECTION_KEY -> {
                 final String delim = command.directions.length() == 0 ? "" : ",";
                 command.directions += delim + action.command;
-                break;
             }
-
-            case 2: {
+            case FLAGS_KEY -> {
                 final String delim = command.flags.length() == 0 ? "" : " ";
                 String flag = action.command;
 
@@ -184,7 +200,6 @@ public class ExampleModClient implements ClientModInitializer {
                     command.flags = flag + delim + command.flags;
                 }
 
-                break;
             }
         }
     }
@@ -197,7 +212,7 @@ public class ExampleModClient implements ClientModInitializer {
             return;
         }
 
-        if ((command.command.equals("//undo") || command.command.equals("//redo")) == false) {
+        if (!command.command.equals("//undo") && !command.command.equals("//redo")) {
             previous_commands.add(command.clone());
             if (previous_commands.size() > 10) {
                 previous_commands.remove(0);
@@ -225,11 +240,12 @@ public class ExampleModClient implements ClientModInitializer {
     }
 
     private void handle_keys(long window, int key, int scancode, int action, int modifier) {
-        if (key == key_toggle_command_mode && action == GLFW.GLFW_PRESS) {
+
+        if (key == key_toggle_vim_mode && action == GLFW.GLFW_PRESS) {
             toggle_command_mode();
         }
 
-        if (command_mode == false) {
+        if (!command_mode) {
             oldKeyCallback.invoke(window, key, scancode, action, modifier);
             return;
         }
@@ -241,7 +257,7 @@ public class ExampleModClient implements ClientModInitializer {
         if (key == GLFW.GLFW_KEY_PERIOD) {
             int cmds_to_repeat = 1;
             Stack<Command> repeat_stack = new Stack<>();
-            if (command.number.isEmpty() == false) {
+            if (!command.number.isEmpty()) {
                 cmds_to_repeat = Integer.parseInt(command.number);
                 cmds_to_repeat = Math.min(previous_commands.size(), cmds_to_repeat);
             }
@@ -272,21 +288,5 @@ public class ExampleModClient implements ClientModInitializer {
 
         update_command(key, modifier);
 
-    }
-
-    @Override
-    public void onInitializeClient() {
-        ClientLifecycleEvents.CLIENT_STARTED.register(client -> {
-            initialize_commands();
-
-            var keyCallback = new GLFWKeyCallback() {
-                @Override
-                public void invoke(long window, int key, int scancode, int action, int mods) {
-                    handle_keys(window, key, scancode, action, mods);
-                }
-            };
-
-            oldKeyCallback = GLFW.glfwSetKeyCallback(MinecraftClient.getInstance().getWindow().getHandle(), keyCallback);
-        });
     }
 }

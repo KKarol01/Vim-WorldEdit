@@ -1,23 +1,29 @@
 package com.vimworldedit;
 
-public class Action implements Comparable<Action> {
-    Action(String command, int category, int glfw_key, int glfw_mod) {
+import net.fabricmc.fabric.impl.client.keybinding.KeyBindingRegistryImpl;
+import net.minecraft.client.option.KeyBinding;
+import net.minecraft.client.util.InputUtil;
+
+public class Action {
+    String command;
+    int modifierKey;
+    KeyCategory category;
+    int keyBinding;
+
+    Action(String command, KeyCategory category, int keycode, int modifierKey) {
         this.command = command;
         this.category = category;
-        this.glfw_key = glfw_key;
-        this.glfw_mod = glfw_mod;
+        this.keyBinding = keycode;
+        this.modifierKey = modifierKey;
     }
 
-    @Override
-    public int compareTo(Action a) {
-        int x = Integer.compare(this.glfw_key, a.glfw_key);
-        if (x != 0) {
-            return x;
-        }
-
-        return Integer.compare(this.glfw_mod, a.glfw_mod);
+    Action(String name, String command, KeyCategory category, int keycode) {
+        this(name, command, category, keycode, 0);
+    }
+    Action(String name, String command, KeyCategory category, int keycode, int modifierKey) {
+        this(command, category, keycode, modifierKey);
     }
 
-    String command;
-    int glfw_key, glfw_mod, category;
+
+
 }
