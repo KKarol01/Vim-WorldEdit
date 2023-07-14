@@ -241,15 +241,11 @@ public class VimWorldEditClient implements ClientModInitializer {
 
     private void handle_keys(long window, int key, int scancode, int action, int modifier) {
 
-        System.out.println(key);
-        System.out.println(GLFW.glfwGetKeyName(key, scancode));
-
         if (key == key_toggle_vim_mode && action == GLFW.GLFW_PRESS) {
             toggle_command_mode();
         }
 
         if (!command_mode) {
-            System.out.println("treating key like normal");
             oldKeyCallback.invoke(window, key, scancode, action, modifier);
             return;
         }
