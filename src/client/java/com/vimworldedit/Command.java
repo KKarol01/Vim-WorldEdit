@@ -28,16 +28,16 @@ public class Command implements Cloneable {
     public String toString() {
         String cmd = "";
         cmd += this.command + " ";
-        if (this.number.isEmpty() == false) {
+        if (!this.number.isEmpty()) {
             cmd += this.number + " ";
         }
-        if (this.directions.isEmpty() == false) {
+        if (!this.directions.isEmpty()) {
             cmd += this.directions + " ";
         }
-        if (this.flags.isEmpty() == false) {
+        if (!this.flags.isEmpty()) {
             cmd += this.flags;
 
-            if (cmd.endsWith("-m") && mask.isEmpty() == false) {
+            if (cmd.endsWith("-m") && !mask.isEmpty()) {
                 cmd += " " + mask;
             }
         }
