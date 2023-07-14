@@ -31,15 +31,14 @@ public class VimWorldEditClient implements ClientModInitializer {
 
     @Override
     public void onInitializeClient() {
-        initialize_commands();
         ClientLifecycleEvents.CLIENT_STARTED.register(client -> {
+            initialize_commands();
             var keyCallback = new GLFWKeyCallback() {
                 @Override
                 public void invoke(long window, int key, int scancode, int action, int mods) {
                     handle_keys(window, key, scancode, action, mods);
                 }
             };
-
             oldKeyCallback = GLFW.glfwSetKeyCallback(MinecraftClient.getInstance().getWindow().getHandle(), keyCallback);
         });
     }
@@ -86,7 +85,7 @@ public class VimWorldEditClient implements ClientModInitializer {
 
     private static Action get_action(int key, int mod) {
         for (Action action : actions) {
-            if (action.keyBinding.getDefaultKey().getCode() != key) continue;
+            if (action.keyBinding != key) continue;
             if (action.modifierKey != mod) continue;
             return action;
         }
@@ -176,7 +175,7 @@ public class VimWorldEditClient implements ClientModInitializer {
 
         if (action == null) return;
 
-        if (!(action.modifierKey == mod) || !(action.keyBinding.getDefaultKey().getCode() == key)) {
+        if (!(action.modifierKey == mod) || !(action.keyBinding == key)) {
             return;
         }
 
@@ -241,11 +240,16 @@ public class VimWorldEditClient implements ClientModInitializer {
     }
 
     private void handle_keys(long window, int key, int scancode, int action, int modifier) {
+
+        System.out.println(key);
+        System.out.println(GLFW.glfwGetKeyName(key, scancode));
+
         if (key == key_toggle_vim_mode && action == GLFW.GLFW_PRESS) {
             toggle_command_mode();
         }
 
         if (!command_mode) {
+            System.out.println("treating key like normal");
             oldKeyCallback.invoke(window, key, scancode, action, modifier);
             return;
         }
