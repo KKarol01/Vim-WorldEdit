@@ -31,7 +31,7 @@ k Cs Cm F1 m ....
 I think the provided above examples are sufficient without any further commentary.
 
 ## How to install
-You need Minecraft 1.19.3 (as of writing this), [fabric](https://fabricmc.net/use/installer/) (and fabric api), and this mod, which you can get `here` and put it inside the `mods` folder.
+This mod works with minecraft versions 1.19.3-1.20.1, [fabric](https://fabricmc.net/use/installer/) (and fabric api), and this mod, which you can get `here` and put it inside the `mods` folder.
 You also need a server with WorldEdit plugin (not included here) and permissions to use the commands it provides (obviously).
 
 ## How to use
