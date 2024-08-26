@@ -5,9 +5,11 @@ import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
 import net.minecraft.block.Block;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayNetworkHandler;
+import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.text.Text;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.hit.HitResult;
+import net.minecraft.util.math.Vec3d;
 import org.lwjgl.glfw.*;
 
 import java.util.*;
@@ -28,6 +30,8 @@ public class VimWorldEditClient implements ClientModInitializer {
 
     Command command = new Command();
     Stack<Command> previous_commands = new Stack<>();
+    HashMap<String, SavedPosition> saved_positions = new HashMap<>();
+    SavedPosition last_used_position = null;
 
     @Override
     public void onInitializeClient() {
@@ -64,6 +68,14 @@ public class VimWorldEditClient implements ClientModInitializer {
         actions.add(new Action("delete", "//set 0", command, GLFW.GLFW_KEY_D));
         actions.add(new Action("rotate", "//rotate", command, GLFW.GLFW_KEY_R));
 
+        //movement
+        actions.add(new Action("move_right", "/tpr", command, GLFW.GLFW_KEY_RIGHT));
+        actions.add(new Action("move_left", "/tpl", command, GLFW.GLFW_KEY_LEFT));
+        actions.add(new Action("move_down", "/tpd", command, GLFW.GLFW_KEY_DOWN, shift));
+        actions.add(new Action("move_up", "/tpu", command, GLFW.GLFW_KEY_UP, shift));
+        actions.add(new Action("move_forward", "/tpf", command, GLFW.GLFW_KEY_UP));
+        actions.add(new Action("move_backward", "/tpb", command, GLFW.GLFW_KEY_DOWN));
+
         //directions
         actions.add(new Action("direction_left", "l", direction, GLFW.GLFW_KEY_H));
         actions.add(new Action("direction_down", "d", direction, GLFW.GLFW_KEY_J));
@@ -85,18 +97,22 @@ public class VimWorldEditClient implements ClientModInitializer {
 
     private static Action get_action(int key, int mod) {
         for (Action action : actions) {
-            if (action.keyBinding != key) continue;
-            if (action.modifierKey != mod) continue;
+            if (action.keyBinding != key) {
+                continue;
+            }
+            if (action.modifierKey != mod) {
+                continue;
+            }
             return action;
         }
         return null;
     }
 
-    private static boolean is_key_a_number(int key) {
+    private static boolean is_number_key(int key) {
         return key_zero <= key && key <= key_nine;
     }
 
-    private static boolean is_key_a_function_key(int key) {
+    private static boolean is_function_key(int key) {
         return key_f1 <= key && key <= key_f12;
     }
 
@@ -109,7 +125,7 @@ public class VimWorldEditClient implements ClientModInitializer {
     }
 
     private void update_command(int key, int mod) {
-        if (is_key_a_number(key)) {
+        if (is_number_key(key)) {
             final int number = key - key_zero;
 
             if (number == 0 && command.number.length() == 0) {
@@ -119,7 +135,7 @@ public class VimWorldEditClient implements ClientModInitializer {
             return;
         }
 
-        if (is_key_a_function_key(key)) {
+        if (is_function_key(key)) {
             if (mod == 0) {
                 command.mask = masks.get(key);
             } else if (mod == GLFW.GLFW_MOD_ALT) {
@@ -172,17 +188,17 @@ public class VimWorldEditClient implements ClientModInitializer {
         }
 
         Action action = get_action(key, mod);
-
-        if (action == null) return;
-
-        if (!(action.modifierKey == mod) || !(action.keyBinding == key)) {
+        if (action == null) {
             return;
         }
-
+        if (action.modifierKey != mod || action.keyBinding != key) {
+            return;
+        }
 
         switch (action.category) {
             case COMMAND_KEY -> {
                 command.command = action.command;
+                patch_command();
                 execute_command();
             }
             case DIRECTION_KEY -> {
@@ -204,6 +220,80 @@ public class VimWorldEditClient implements ClientModInitializer {
         }
     }
 
+    /* Tries to add missing parameters */
+    private void patch_command() {
+        if (command.command.equals("//expand") && command.number.isEmpty()) {
+            command.number = "1";
+        } else if (command.command.equals("//contract") && command.number.isEmpty()) {
+            command.number = "1";
+        } else if (command.command.startsWith("/tp")) {
+            if (MinecraftClient.getInstance() == null || MinecraftClient.getInstance().player == null) {
+                command.command = "";
+                return;
+            }
+
+            if (command.number.isEmpty()) {
+                command.number = "1";
+            }
+
+            final int command_number = Integer.parseInt(command.number);
+
+            Vec3d rot = MinecraftClient.getInstance().player.getRotationVector();
+            rot = rot.multiply(new Vec3d(1.0, 0.0, 1.0));
+            rot = rot.normalize();
+
+            Vec3d[] dirs = {
+                    new Vec3d(1.0, 0.0, 0.0),
+                    new Vec3d(0.0, 0.0, 1.0),
+                    new Vec3d(-1.0, 0.0, 0.0),
+                    new Vec3d(0.0, 0.0, -1.0),
+            };
+
+            float[] dot_products = {
+                    (float) (rot.x * dirs[0].x + rot.z * dirs[0].z),
+                    (float) (rot.x * dirs[1].x + rot.z * dirs[1].z),
+                    (float) (rot.x * dirs[2].x + rot.z * dirs[2].z),
+                    (float) (rot.x * dirs[3].x + rot.z * dirs[3].z),
+            };
+
+            Vec3d forward_dir = dirs[0];
+            float max_dot_product = dot_products[0];
+            for (int i = 1; i < 4; ++i) {
+                if (max_dot_product < dot_products[i]) {
+                    max_dot_product = dot_products[i];
+                    forward_dir = dirs[i];
+                }
+            }
+
+            Vec3d right_dir = forward_dir.crossProduct(new Vec3d(0.0, 1.0, 0.0));
+            Vec3d player_pos = MinecraftClient.getInstance().player.getPos();
+            Vec3d original_pos = player_pos;
+
+            forward_dir = forward_dir.multiply(command_number);
+            right_dir = right_dir.multiply(command_number);
+
+            if (command.command.startsWith("/tpr")) {
+                player_pos = player_pos.add(right_dir);
+            } else if (command.command.startsWith("/tpl")) {
+                player_pos = player_pos.add(right_dir.multiply(new Vec3d(-1.0, 0.0, -1.0)));
+            } else if (command.command.startsWith("/tpd")) {
+                player_pos = player_pos.add(new Vec3d(0.0, -command_number, 0.0));
+            } else if (command.command.startsWith("/tpu")) {
+                player_pos = player_pos.add(new Vec3d(0.0, command_number, 0.0));
+            } else if (command.command.startsWith("/tpf")) {
+                player_pos = player_pos.add(forward_dir);
+            } else if (command.command.startsWith("/tpb")) {
+                player_pos = player_pos.add(forward_dir.multiply(new Vec3d(-1.0, 0.0, -1.0)));
+            }
+
+            Vec3d delta_pos = player_pos.subtract(original_pos);
+
+            command.command = "/tp";
+            command.number = String.format("~%f ~%f ~%f", delta_pos.x, delta_pos.y, delta_pos.z);
+            System.out.println(forward_dir.toString());
+        }
+    }
+
     private void execute_command() {
         if (MinecraftClient.getInstance().getNetworkHandler() == null) {
             if (MinecraftClient.getInstance().player != null) {
@@ -214,7 +304,7 @@ public class VimWorldEditClient implements ClientModInitializer {
 
         if (!command.command.equals("//undo") && !command.command.equals("//redo")) {
             previous_commands.add(command.clone());
-            if (previous_commands.size() > 10) {
+            if (previous_commands.size() > 128) {
                 previous_commands.remove(0);
             }
         }
@@ -240,7 +330,6 @@ public class VimWorldEditClient implements ClientModInitializer {
     }
 
     private void handle_keys(long window, int key, int scancode, int action, int modifier) {
-
         if (key == key_toggle_vim_mode && action == GLFW.GLFW_PRESS) {
             toggle_command_mode();
         }
@@ -275,8 +364,47 @@ public class VimWorldEditClient implements ClientModInitializer {
             return;
         }
 
+        if (key == GLFW.GLFW_KEY_APOSTROPHE) {
+            ClientPlayerEntity player = MinecraftClient.getInstance() != null ? MinecraftClient.getInstance().player : null;
+            if (player == null) {
+                return;
+            }
 
-        if (key == GLFW.GLFW_KEY_ESCAPE) {
+            Vec3d player_pos = player.getPos();
+
+            if (modifier == GLFW.GLFW_MOD_SHIFT) {
+                if (!command.number.isEmpty()) {
+                    saved_positions.put(command.number, new SavedPosition(player_pos));
+                    command.clear();
+                }
+                return;
+            }
+
+            SavedPosition destination_pos = null;
+            if (!command.number.isEmpty()) {
+                destination_pos = saved_positions.getOrDefault(command.number, null);
+            } else {
+                destination_pos = last_used_position;
+            }
+
+            command.clear();
+            if (destination_pos == null) {
+                return;
+            }
+
+            last_used_position = new SavedPosition(player_pos);
+
+            command.command = "/tp";
+            command.number = destination_pos.get_pos_string();
+            execute_command();
+            return;
+        }
+
+        if (key == GLFW.GLFW_KEY_ESCAPE || key == GLFW.GLFW_KEY_W) {
+            if (key == GLFW.GLFW_KEY_W) {
+                oldKeyCallback.invoke(window, key, scancode, GLFW.GLFW_KEY_DOWN, modifier);
+            }
+
             if (command.toString().trim().isEmpty()) {
                 toggle_command_mode();
                 return;
@@ -287,6 +415,5 @@ public class VimWorldEditClient implements ClientModInitializer {
         }
 
         update_command(key, modifier);
-
     }
 }
