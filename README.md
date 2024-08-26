@@ -23,7 +23,7 @@ This: (if you don't know the exact number - also useful for little moves to adju
 ```
 Or:
 ```
-s . . .
+Cs s . . .
 ```
 This:
 ```
