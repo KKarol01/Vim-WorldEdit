@@ -88,11 +88,11 @@ If you want to stack glass *and glowstone*, point your camera to the glowstone, 
 
 ### Movement
 Starting from version `1.0.2`, you can move without exiting the command mode (for example to copy, flip and paste selection that does not have a single center and requires you to strafe one block to the left or right).
-To do that, you can now press the arrow keys. Arrow keys can be repeated with "`.`" command and combined with number keys to move farther than one block. For example: `Arrow up` teleports you forward, `Arrow right` teleports you to the right, relative to the current looking direction. `Shift + Arrow Up` and Shift + `Arrow down` moves up and down.
+To do that, you can now press the arrow keys. Arrow keys can be repeated with "`.`" command and combined with number keys to move farther than one block. For example: `Arrow up` teleports you forward, `Arrow right` teleports you to the right, relative to the current looking direction. `Shift + Arrow Up` and `Shift + Arrow down` moves up and down.
 
 ### Saving positions and teleporting (bookmarks)
 Starting from version `1.0.2`, you can save locations to teleport to them later (kinda like sethome).
-To save a location, you need to position yourself at a place of interest, and then type a number: it can be 1, 2, 3, etc. up to 2147483647; then you need to press `Shift + '"` (that's an apostrophe).
+To save a location, you need to position yourself at a place of interest, and then type a number: it can be 1, 2, 3, etc. up to 2147483647; then you need to press `Shift + '` (that's an apostrophe).
 If you do it again, you will overwrite this location with your current one.
 To teleport to that location, you enter the corresponding number and press `'`.
 
