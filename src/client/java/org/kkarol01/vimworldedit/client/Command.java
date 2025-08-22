@@ -1,7 +1,8 @@
-package com.vimworldedit;
+package org.kkarol01.vimworldedit.client;
 
 public class Command implements Cloneable {
-    public void clear() {
+    public void clear()
+    {
         command = "";
         directions = "";
         number = "";
@@ -10,41 +11,36 @@ public class Command implements Cloneable {
     }
 
     @Override
-    public Command clone() {
-        try {
+    public Command clone()
+    {
+        try
+        {
             Command clone = (Command) super.clone();
             clone.command = this.command;
             clone.directions = this.directions;
             clone.number = this.number;
             clone.flags = this.flags;
             clone.mask = this.mask;
-
             return clone;
-        } catch (CloneNotSupportedException e) {
-            throw new AssertionError();
-        }
+        } catch (CloneNotSupportedException e) { throw new AssertionError(); }
     }
 
     public String toString() {
         String cmd = "";
         cmd += this.command + " ";
-        if (!this.number.isEmpty()) {
-            cmd += this.number + " ";
-        }
-        if (!this.directions.isEmpty()) {
-            cmd += this.directions + " ";
-        }
-        if (!this.flags.isEmpty()) {
+        if (!this.number.isEmpty()) { cmd += this.number + " "; }
+        if (!this.directions.isEmpty()) { cmd += this.directions + " "; }
+        if (!this.flags.isEmpty())
+        {
             cmd += this.flags;
-
-            if (cmd.endsWith("-m") && !mask.isEmpty()) {
-                cmd += " " + mask;
-            }
+            if (cmd.endsWith("-m") && !mask.isEmpty()) { cmd += " " + mask; }
         }
-
-
         return cmd;
     }
 
-    String command = "", directions = "", number = "", flags = "", mask = "";
+    String command = "";
+    String directions = "";
+    String number = "";
+    String flags = "";
+    String mask = "";
 }
