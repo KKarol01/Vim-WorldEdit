@@ -71,7 +71,7 @@ So, if you want to move your selection by one block multiple times upwards, you 
 ### Canceling modifiers
 If you wanted to type a command that flips the clipboard to the right side, but you accidentaly pressed up/down (so the typed keys are `k` or `j`). The only thing you can do, is to press `Escape` or `W` and type your command anew.
 
-### Using masks
+### Using masks (REMOVED SINCE 1-0-3)
 Currently, to create a mask, you need to be looking at the block you wish to add to the mask, and press Ctrl+F1-F12. You can can have 12 masks at the same time, hence F1-F12. By pressing functional key with a ctrl, you will erase what was there before, and add a new block.
 If you are not looking at any block or the nearest block isn't in the 30 block radius, a message saying that "There is no block in sight" will appear and nothing will happen. To only append the block to the mask, you should hold `Shift` instead of `Ctrl`.
 Also, liquids are skipped and will not be added to the mask.
@@ -91,6 +91,8 @@ Starting from version `1.0.2`, you can move without exiting the command mode (fo
 To do that, you can now press the arrow keys. Arrow keys can be repeated with "`.`" command and combined with number keys to move farther than one block. For example: `Arrow up` teleports you forward, `Arrow right` teleports you to the right, relative to the current looking direction. `Shift + Arrow Up` and `Shift + Arrow down` moves up and down.
 
 ### Saving positions and teleporting (bookmarks)
+Starting from version `1.0.3` named locations are removed. You only do `Shift+'` to save your current location and `'` to go back. Going back replaces your previously saved location so you can go back and forth between them.
+
 Starting from version `1.0.2`, you can save locations to teleport to them later (kinda like sethome).
 To save a location, you need to position yourself at a place of interest, and then type a number: it can be 1, 2, 3, etc. up to 2147483647; then you need to press `Shift + '` (that's an apostrophe).
 If you do it again, you will overwrite this location with your current one.
@@ -143,7 +145,7 @@ Flags:
 - `Ctrl+S` - `-s`
 - `Ctrl+M` - `-m`
 
-Masks[^3]: 
+Masks[^3] (REMOVED SINCE 1.0.3): 
 - `F1-F12` - `Include the mask in the command`
 - `Alt+F1-F12` - `Include negated version of the mask in the command`
 - `Ctrl+F1-F12` - `Clear mask and add a block that you're looking at`
